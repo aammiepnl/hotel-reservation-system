@@ -1,7 +1,7 @@
 package com.hotel.reservation.controller;
 
 import com.hotel.reservation.entity.User;
-import com.hotel.reservation.respository.UserRepository;
+import com.hotel.reservation.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
