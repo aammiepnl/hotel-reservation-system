@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS hotel_reservation;
+CREATE DATABASE hotel_reservation;
 USE hotel_reservation;
 
 -- 1. ตาราง users: เก็บข้อมูลผู้ใช้ทั้งหมด (Guest, Receptionist, Admin)
@@ -61,11 +61,9 @@ CREATE TABLE payments (
 -- 6. ตาราง reviews: เก็บข้อมูลรีวิวจากลูกค้า
 CREATE TABLE reviews (
   review_id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
   reservation_id INT NOT NULL,
   rating INT CHECK (rating BETWEEN 1 AND 5),
   comment TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(user_id),
   FOREIGN KEY (reservation_id) REFERENCES reservations(reservation_id)
 );

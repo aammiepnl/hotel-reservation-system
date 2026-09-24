@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hotel Reservation - Available Rooms</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f7fa;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .header h1 { color: #333; font-size: 24px; }
+        .header a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .room-card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+        .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .room-info h3 { color: #333; margin-bottom: 8px; }
+        .room-info p { color: #666; font-size: 14px; margin: 3px 0; }
+        .price { color: #28a745; font-weight: bold; font-size: 18px; }
+        .book-btn {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .book-btn:hover { background: #5568d3; }
+        .book-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            display: none;
+        }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏨 Available Rooms</h1>
+        <a href="login.html">Logout</a>
+    </div>
+
+    <div id="rooms"></div>
+    <div id="status"></div>
+
+    <script>
+        async function loadRooms() {
+            try {
+                const response = await fetch('http://localhost:8081/api/reservations/available');
+                const rooms = await response.json();
+                
+                if (rooms.length === 0) {
+                    document.getElementById('rooms').innerHTML = '<p>No rooms available.</p>';
+                    return;
+                }
+
+                document.getElementById('rooms').innerHTML = rooms.map(r => `
+                    <div class="room-card">
+                        <div class="room-info">
+                            <h3>Room ${r.roomNumber} - ${r.roomType.typeName}</h3>
+                            <p>Capacity: ${r.roomType.capacity} guests</p>
+                            <p>${r.roomType.description}</p>
+                            <p class="price">฿${r.roomType.price} / night</p>
+                        </div>
+                        <button class="book-btn" onclick="bookRoom(${r.roomId}, this)">Book Now</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showStatus('Cannot connect to server', 'error');
+            }
+        }
+
+        async function bookRoom(roomId, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Booking...';
+            
+            const userId = localStorage.getItem('userId') || '1';
+            
+            try {
+                const response = await fetch('http://localhost:8081/api/reservations/book', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        userId: userId,
+                        roomId: roomId,
+                        checkInDate: '2026-12-01',
+                        checkOutDate: '2026-12-03'
+                    })
+                });
+
+                if (response.ok) {
+                    const reservation = await response.json();
+                    showStatus(`✅ Booking successful! Total: ฿${reservation.totalPrice}`, 'success');
+                    setTimeout(() => loadRooms(), 2000);
+                } else {
+                    const error = await response.text();
+                    showStatus('❌ ' + error, 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Book Now';
+                }
+            } catch (error) {
+                showStatus('Cannot connect to server', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Book Now';
+            }
+        }
+
+        function showStatus(text, type) {
+            const status = document.getElementById('status');
+            status.textContent = text;
+            status.className = 'status-' + type;
+            status.style.display = 'block';
+            setTimeout(() => status.style.display = 'none', 3000);
+        }
+
+        loadRooms();
+    </script>
+</body>
+</html>
